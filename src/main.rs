@@ -13,15 +13,22 @@ fn main() {
 }
 
 fn calculate_fuel(mass: i32) -> i32 {
-    let mut fuel = (mass as f32 / 3.0).floor() as i32;
-    if (fuel - 2) < 0 {
-        fuel = 0
-    }
-    if fuel > 0 {
-        fuel -= 2;
+    let mut fuel = fuel_sub_calc(mass);
+    if fuel == 0 {
+        fuel
+    } else {
         fuel = fuel + calculate_fuel(fuel);
+        fuel
     }
-    fuel
+}
+
+fn fuel_sub_calc(mass: i32) -> i32 {
+    let fuel = (mass as f32 / 3.0).floor() as i32;
+    if (fuel - 2) < 0 {
+        0
+    } else {
+        fuel - 2
+    }
 }
 
 fn total_fuel(modules_mass: &[i32]) -> i32 {
