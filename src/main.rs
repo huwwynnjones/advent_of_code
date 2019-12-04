@@ -2,8 +2,27 @@ use std::io::{BufReader, BufRead};
 use std::io;
 use std::fs::File;
 
-fn main() -> io::Result<()>  {
-    let modules_mass_input = File::open("modules_mass.txt")?;
+fn main() {
+    let modules_mass = match load_mass_input("modules_mass.txt") {
+        Ok(m) => m,
+        Err(err) => panic!("Unable to load the input data: {}", err)
+    };
+
+    let total = total_fuel(&modules_mass);
+    println!("The total fuel needed is {}",total);
+
+}
+
+fn calculate_fuel(mass: i32) -> i32 {
+    ((mass as f32 / 3.0).floor() - 2.0) as i32
+}
+
+fn total_fuel(modules_mass: &[i32]) -> i32 {
+    modules_mass.iter().map(|x| calculate_fuel(*x)).sum()
+}
+
+fn load_mass_input(file_name: &str) -> io::Result<Vec<i32>> {
+    let modules_mass_input = File::open(file_name)?;
     let reader = BufReader::new(modules_mass_input);
 
     let mut modules_mass = Vec::new();
@@ -16,17 +35,7 @@ fn main() -> io::Result<()>  {
         Err(err) => panic!("{}", err)
     });
 
-    let total = total_fuel(&modules_mass);
-    println!("The total fuel needed is {}",total);
-    Ok(())
-}
-
-fn calculate_fuel(mass: i32) -> i32 {
-    ((mass as f32 / 3.0).floor() - 2.0) as i32
-}
-
-fn total_fuel(modules_mass: &[i32]) -> i32 {
-    modules_mass.iter().map(|x| calculate_fuel(*x)).sum()
+    Ok(modules_mass)
 }
 
 #[cfg(test)]
@@ -45,5 +54,11 @@ mod tests {
     fn test_total_fuel() {
         let modules_mass = [12, 14, 1969, 100756];
         assert_eq!(total_fuel(&modules_mass), 34241)
+    }
+
+    #[test]
+    fn test_load_mass_input() {
+        let correct_mass = [106947, 129138, 56893, 75116, 96763];
+        assert_eq!(load_mass_input("modules_mass_test.txt").unwrap(), correct_mass);
     }
 }
