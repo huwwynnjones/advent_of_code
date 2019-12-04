@@ -1,20 +1,27 @@
-use std::io::{BufReader, BufRead};
-use std::io;
 use std::fs::File;
+use std::io;
+use std::io::{BufRead, BufReader};
 
 fn main() {
     let modules_mass = match load_mass_input("modules_mass.txt") {
         Ok(m) => m,
-        Err(err) => panic!("Unable to load the input data: {}", err)
+        Err(err) => panic!("Unable to load the input data: {}", err),
     };
 
     let total = total_fuel(&modules_mass);
-    println!("The total fuel needed is {}",total);
-
+    println!("The total fuel needed is {}", total);
 }
 
 fn calculate_fuel(mass: i32) -> i32 {
-    ((mass as f32 / 3.0).floor() - 2.0) as i32
+    let mut fuel = (mass as f32 / 3.0).floor() as i32;
+    if (fuel - 2) < 0 {
+        fuel = 0
+    }
+    if fuel > 0 {
+        fuel -= 2;
+        fuel = fuel + calculate_fuel(fuel);
+    }
+    fuel
 }
 
 fn total_fuel(modules_mass: &[i32]) -> i32 {
@@ -26,13 +33,13 @@ fn load_mass_input(file_name: &str) -> io::Result<Vec<i32>> {
     let reader = BufReader::new(modules_mass_input);
 
     let mut modules_mass = Vec::new();
-    
+
     reader.lines().for_each(|l| match l {
         Ok(mass) => match mass.parse::<i32>() {
             Ok(nmb) => modules_mass.push(nmb),
-            Err(err) => panic!("{}", err)    
+            Err(err) => panic!("{}", err),
         },
-        Err(err) => panic!("{}", err)
+        Err(err) => panic!("{}", err),
     });
 
     Ok(modules_mass)
@@ -43,22 +50,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_fuel(){
+    fn test_calculate_fuel() {
+        assert_eq!(calculate_fuel(2), 0);
         assert_eq!(calculate_fuel(12), 2);
         assert_eq!(calculate_fuel(14), 2);
-        assert_eq!(calculate_fuel(1969), 654);
-        assert_eq!(calculate_fuel(100756), 33583);
+        assert_eq!(calculate_fuel(1969), 966);
+        assert_eq!(calculate_fuel(100756), 50346);
     }
 
     #[test]
     fn test_total_fuel() {
         let modules_mass = [12, 14, 1969, 100756];
-        assert_eq!(total_fuel(&modules_mass), 34241)
+        assert_eq!(total_fuel(&modules_mass), (0 + 2 + 2 + 966 + 50346))
     }
 
     #[test]
     fn test_load_mass_input() {
         let correct_mass = [106947, 129138, 56893, 75116, 96763];
-        assert_eq!(load_mass_input("modules_mass_test.txt").unwrap(), correct_mass);
+        assert_eq!(
+            load_mass_input("modules_mass_test.txt").unwrap(),
+            correct_mass
+        );
     }
 }
