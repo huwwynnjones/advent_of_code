@@ -16,41 +16,97 @@ fn main() {
         Err(err) => panic!("Unable to load the program data: {}", err),
     };
 
-    let updated_program = restore_gravity_assist(&program);
-    let executed_program = run_opcodes(&updated_program);
-    println!("The value at position 0 is {}", executed_program[0])
+    let executed_program = restore_gravity_assist(&program);
+    println!(
+        "The value of the output after restoring gravity assist is {}",
+        executed_program[0]
+    );
+    match find_noun_and_verb(&program) {
+        Some(answer) => {
+            println!("Found a match for noun: {}, verb: {}", answer.0, answer.1);
+            println!("100 * noun + verb = {}", (100 * answer.0) + answer.1)
+        }
+        None => println!("Nothing found"),
+    }
+}
+
+fn find_noun_and_verb(program: &[i32]) -> Option<(i32, i32)> {
+    let desired_output = 19_690_720;
+    let original_instructions = Vec::from(program);
+    for noun in 0..99 {
+        for verb in 0..99 {
+            let processed_instructions =
+                process_instructions(Some(noun), Some(verb), &original_instructions);
+            if processed_instructions[0] == desired_output {
+                return Some((noun, verb));
+            }
+        }
+    }
+    None
 }
 
 fn restore_gravity_assist(program: &[i32]) -> Vec<i32> {
-    let mut new_program = Vec::from(program);
-    new_program[1] = 12;
-    new_program[2] = 2;
-    new_program
+    let memory = Vec::from(program);
+    process_instructions(Some(12), Some(2), &memory)
 }
 
-const OPCODE_LENGTH: usize = 4;
+const INSTRUCTION_LENGTH: usize = 4;
 
-fn run_opcodes(input_opcodes: &[i32]) -> Vec<i32> {
-    let mut output_opcodes = Vec::from(input_opcodes);
-    let mut idx = 0;
-    loop {
-        match output_opcodes[idx] {
-            1 => {
-                let positions = determine_positions(idx, &output_opcodes);
-                output_opcodes[positions.answer] =
-                    output_opcodes[positions.first_nmb] + output_opcodes[positions.second_nmb]
-            }
-            2 => {
-                let positions = determine_positions(idx, &output_opcodes);
-                output_opcodes[positions.answer] =
-                    output_opcodes[positions.first_nmb] * output_opcodes[positions.second_nmb]
-            }
-            99 => break,
+enum OpCode {
+    Add,
+    Multiply,
+    Halt,
+}
+
+impl From<i32> for OpCode {
+    fn from(opcode_number: i32) -> Self {
+        match opcode_number {
+            1 => OpCode::Add,
+            2 => OpCode::Multiply,
+            99 => OpCode::Halt,
             _ => panic!("Unknown opcode"),
         }
-        idx += OPCODE_LENGTH
     }
-    output_opcodes
+}
+
+fn process_instructions(noun: Option<i32>, verb: Option<i32>, instructions: &[i32]) -> Vec<i32> {
+    let mut processed_instructions = Vec::from(instructions);
+    if let Some(n) = noun {
+        processed_instructions[1] = n
+    };
+    if let Some(v) = verb {
+        processed_instructions[2] = v
+    };
+    let mut instruction_pointer = 0;
+    loop {
+        match processed_instructions[instruction_pointer].into() {
+            OpCode::Add => {
+                update_instructions(&mut processed_instructions, instruction_pointer, |x, y| {
+                    x + y
+                })
+            }
+            OpCode::Multiply => {
+                update_instructions(&mut processed_instructions, instruction_pointer, |x, y| {
+                    x * y
+                })
+            }
+            OpCode::Halt => break,
+        }
+        instruction_pointer += INSTRUCTION_LENGTH
+    }
+    processed_instructions
+}
+
+fn update_instructions(
+    instructions: &mut [i32],
+    instruction_pointer: usize,
+    operation: fn(i32, i32) -> i32,
+) {
+    let positions = determine_positions(instruction_pointer, &instructions);
+    instructions[positions.answer] = operation(
+        instructions[positions.first_nmb],
+        instructions[positions.second_nmb],
+    )
 }
 
 struct Positions {
@@ -121,7 +177,7 @@ fn load_program_input(file_name: &str) -> io::Result<Vec<i32>> {
         .split(',')
         .map(|x| {
             x.parse::<i32>()
-                .expect(format!("Failed to parse: {}", x).as_ref())
+                .unwrap_or_else(|_| panic!("Failed to parse: {}", x))
         })
         .collect();
     Ok(program)
@@ -130,14 +186,6 @@ fn load_program_input(file_name: &str) -> io::Result<Vec<i32>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_restore_gravity_assist() {
-        let correct_changes = [1, 12, 2, 3, 1, 1, 2, 3, 1, 3, 4, 3, 1];
-        let mut input = [1, 0, 0, 3, 1, 1, 2, 3, 1, 3, 4, 3, 1];
-        restore_gravity_assist(&mut input);
-        assert_eq!(input, correct_changes);
-    }
 
     #[test]
     fn test_run_opcodes() {
@@ -152,7 +200,7 @@ mod tests {
         ];
 
         for test_set in test_sets.iter() {
-            assert_eq!(run_opcodes(&test_set.0), test_set.1)
+            assert_eq!(process_instructions(None, None, &test_set.0), test_set.1)
         }
     }
 
