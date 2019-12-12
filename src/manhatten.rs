@@ -5,24 +5,16 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-pub fn find_closest_intersection(first_wire: &[&str], second_wire: &[&str]) -> i32 {
+pub fn find_closest_intersection(first_wire: &[&str], second_wire: &[&str]) -> u32 {
     let intersections = find_intersections(first_wire, second_wire);
     find_closest(intersections)
 }
 
-fn find_closest(intersections: HashSet<(i32, i32)>) -> i32 {
+fn find_closest(intersections: HashSet<(i32, i32)>) -> u32 {
     let central_port = (0, 0);
-    let mut distance;
-    let mut iter = intersections.iter();
-    match iter.next() {
-        Some(intersection) => {
-            distance = manhatten_distance(central_port, *intersection);
-        }
-        None => panic!("Empty set of intersections"),
-    }
-
-    for intersection in iter {
-        let current_distance = manhatten_distance(central_port, *intersection);
+    let mut distance = u32::max_value();
+    for intersection in intersections {
+        let current_distance = manhatten_distance(central_port, intersection);
         if current_distance < distance {
             distance = current_distance
         }
@@ -30,8 +22,8 @@ fn find_closest(intersections: HashSet<(i32, i32)>) -> i32 {
     distance
 }
 
-fn manhatten_distance(central_port: (i32, i32), intersection: (i32, i32)) -> i32 {
-    (intersection.0 - central_port.0).abs() + (intersection.1 - central_port.1).abs()
+fn manhatten_distance(central_port: (i32, i32), intersection: (i32, i32)) -> u32 {
+    ((intersection.0 - central_port.0).abs() + (intersection.1 - central_port.1).abs()) as u32
 }
 
 fn find_intersections(first_wire: &[&str], second_wire: &[&str]) -> HashSet<(i32, i32)> {
