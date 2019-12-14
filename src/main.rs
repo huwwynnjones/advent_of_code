@@ -1,12 +1,14 @@
 mod manhatten;
 mod program;
 mod rocket_equation;
+mod secure_container;
 mod signal_delay;
 
 use crate::{
     manhatten::load_path_directions_input,
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
     rocket_equation::{load_mass_input, total_fuel},
+    secure_container::password_check
 };
 
 fn main() {
@@ -57,4 +59,8 @@ fn main() {
         "The steps distance of the closest intersection is {}",
         signal_delay::find_closest_intersection(&first_wire, &second_wire)
     );
+
+    let count = (367479..=893698).filter(|nmb| password_check(*nmb)).count();
+    println!("The number of different passwords is {}", count)
+
 }
