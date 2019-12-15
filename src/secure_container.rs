@@ -17,7 +17,7 @@ fn contains_adjacent_digits(number: u32) -> bool {
     false
 }
 
-fn no_decrease_left_to_right(number: u32) -> bool {
+pub(crate) fn no_decrease_left_to_right(number: u32) -> bool {
     let nmb_str = number.to_string();
     let mut iter = nmb_str.chars().peekable();
     while let Some(current_ch) = iter.next() {
@@ -39,7 +39,7 @@ fn no_decrease_left_to_right(number: u32) -> bool {
     true
 }
 
-fn six_digits_long(number: u32) -> bool {
+pub(crate) fn six_digits_long(number: u32) -> bool {
     number.to_string().len() == 6
 }
 
