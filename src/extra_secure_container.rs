@@ -1,7 +1,7 @@
 use crate::secure_container::{no_decrease_left_to_right, six_digits_long};
 use std::collections::HashMap;
 
-fn no_adjacent_digits_in_larger_group(number: u32) -> bool {
+fn at_least_one_pair_adjacent_digits_not_in_larger_group(number: u32) -> bool {
     let nmb_str = number.to_string();
     let mut iter = nmb_str.chars().peekable();
     let mut grouping = HashMap::new();
@@ -28,7 +28,7 @@ fn no_adjacent_digits_in_larger_group(number: u32) -> bool {
 
 pub fn password_check(number: u32) -> bool {
     six_digits_long(number)
-        && no_adjacent_digits_in_larger_group(number)
+        && at_least_one_pair_adjacent_digits_not_in_larger_group(number)
         && no_decrease_left_to_right(number)
 }
 
