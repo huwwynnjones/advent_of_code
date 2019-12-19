@@ -1,3 +1,4 @@
+mod diagnostic_program;
 mod extra_secure_container;
 mod manhatten;
 mod program;
@@ -6,6 +7,7 @@ mod secure_container;
 mod signal_delay;
 
 use crate::{
+    diagnostic_program::process_instructions,
     manhatten::load_path_directions_input,
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
     rocket_equation::{load_mass_input, total_fuel},
@@ -69,4 +71,15 @@ fn main() {
         .filter(|nmb| extra_secure_container::password_check(*nmb))
         .count();
     println!("The number of different passwords for part 2 is {}", count);
+
+    let diagnostic_program = match load_program_input("diagnostic_program.txt") {
+        Ok(p) => p,
+        Err(err) => panic!("Unable to load the diagnostic program data: {}", err),
+    };
+
+    let diagnostic_output = process_instructions(Some(1), &diagnostic_program);
+    println!(
+        "The output for the diagnostic program is {:?}",
+        &diagnostic_output
+    );
 }
