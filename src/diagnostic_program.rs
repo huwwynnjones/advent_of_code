@@ -18,7 +18,7 @@ impl From<u32> for OpCode {
             3 => OpCode::Input,
             4 => OpCode::Output,
             99 => OpCode::Halt,
-            _ => panic!("Unknown opcode"),
+            x => panic!("Unknown opcode {}", x),
         }
     }
 }
@@ -60,11 +60,12 @@ pub(crate) fn process_instructions(input: Option<i32>, instructions: &[i32]) -> 
     loop {
         let opcode_mode =
             process_opcode_and_param_mode(processed_instructions[instruction_pointer]);
+        let positions = determine_positions(instruction_pointer, &processed_instructions);    
         match opcode_mode.opcode {
             OpCode::Add => {
                 update_instructions(
                     &mut processed_instructions,
-                    instruction_pointer,
+                    &positions,
                     &opcode_mode.parameter_modes,
                     |x, y| x + y,
                 );
@@ -73,7 +74,7 @@ pub(crate) fn process_instructions(input: Option<i32>, instructions: &[i32]) -> 
             OpCode::Multiply => {
                 update_instructions(
                     &mut processed_instructions,
-                    instruction_pointer,
+                    &positions,
                     &opcode_mode.parameter_modes,
                     |x, y| x * y,
                 );
@@ -81,16 +82,14 @@ pub(crate) fn process_instructions(input: Option<i32>, instructions: &[i32]) -> 
             }
             OpCode::Input => {
                 if let Some(i) = input {
-                    let position = processed_instructions[instruction_pointer + 1] as usize;
-                    processed_instructions[position] = i;
+                    processed_instructions[positions.first_param as usize] = i;
                 };
                 instruction_pointer += INPUT_OUTPUT_INS_LENGTH;
             }
             OpCode::Output => {
-                let position = processed_instructions[instruction_pointer + 1] as usize;
                 match opcode_mode.parameter_modes[0] {
-                    ParameterMode::Position => output.push(processed_instructions[position]),
-                    ParameterMode::Immediate => output.push(position as i32),
+                    ParameterMode::Position => output.push(processed_instructions[positions.first_param as usize]),
+                    ParameterMode::Immediate => output.push(positions.first_param),
                 }
                 instruction_pointer += INPUT_OUTPUT_INS_LENGTH;
             }
@@ -141,18 +140,17 @@ struct OpcodeMode {
 
 fn update_instructions(
     instructions: &mut [i32],
-    instruction_pointer: usize,
+    positions: &Positions,
     parameter_modes: &[ParameterMode],
     operation: fn(i32, i32) -> i32,
 ) {
-    let positions = determine_positions(instruction_pointer, &instructions);
     let first_nmb = match parameter_modes[0] {
-        ParameterMode::Position => instructions[positions.first_nmb as usize],
-        ParameterMode::Immediate => positions.first_nmb,
+        ParameterMode::Position => instructions[positions.first_param as usize],
+        ParameterMode::Immediate => positions.first_param,
     };
     let second_nmb = match parameter_modes[1] {
-        ParameterMode::Position => instructions[positions.second_nmb as usize],
-        ParameterMode::Immediate => positions.second_nmb,
+        ParameterMode::Position => instructions[positions.second_param as usize],
+        ParameterMode::Immediate => positions.second_param,
     };
     match parameter_modes[2] {
         ParameterMode::Position => {
@@ -163,18 +161,18 @@ fn update_instructions(
 }
 
 struct Positions {
-    first_nmb: i32,
-    second_nmb: i32,
+    first_param: i32,
+    second_param: i32,
     answer: i32,
 }
 
 fn determine_positions(idx: usize, output_opcodes: &[i32]) -> Positions {
-    let first_nmb = output_opcodes[idx + 1];
-    let second_nmb = output_opcodes[idx + 2];
+    let first_param = output_opcodes[idx + 1];
+    let second_param = output_opcodes[idx + 2];
     let answer = output_opcodes[idx + 3];
     Positions {
-        first_nmb,
-        second_nmb,
+        first_param,
+        second_param,
         answer,
     }
 }
