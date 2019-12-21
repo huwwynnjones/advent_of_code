@@ -82,4 +82,10 @@ fn main() {
         "The output for the diagnostic program is {:?}",
         &diagnostic_output
     );
+
+    let radiator_diagnostic_output = process_instructions(Some(5), &diagnostic_program);
+    println!(
+        "The output for the thermal radiator diagnostic program is {:?}",
+        &radiator_diagnostic_output
+    );
 }
