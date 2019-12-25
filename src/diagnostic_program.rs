@@ -76,21 +76,21 @@ pub(crate) fn process_instructions(input: Option<i32>, instructions: &[i32]) -> 
         match opcode_mode.opcode {
             OpCode::Add => {
                 update_instructions(
+                    &mut instruction_pointer,
                     &mut processed_instructions,
                     &positions,
                     &opcode_mode.parameter_modes,
                     |x, y| x + y,
                 );
-                instruction_pointer += INSTRUCTION_LENGTH;
             }
             OpCode::Multiply => {
                 update_instructions(
+                    &mut instruction_pointer,
                     &mut processed_instructions,
                     &positions,
                     &opcode_mode.parameter_modes,
                     |x, y| x * y,
                 );
-                instruction_pointer += INSTRUCTION_LENGTH;
             }
             OpCode::Input => {
                 let first_param = positions
@@ -264,6 +264,7 @@ struct OpcodeMode {
 }
 
 fn update_instructions(
+    instruction_pointer: &mut usize,
     instructions: &mut [i32],
     positions: &Positions,
     parameter_modes: &[ParameterMode],
@@ -291,6 +292,7 @@ fn update_instructions(
         ParameterMode::Position => instructions[answer as usize] = operation(first_nmb, second_nmb),
         ParameterMode::Immediate => panic!("wtf i thought there were no immediates for writing"),
     }
+    *instruction_pointer += INSTRUCTION_LENGTH;
 }
 
 struct Positions {

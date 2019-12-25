@@ -1,6 +1,7 @@
 mod diagnostic_program;
 mod extra_secure_container;
 mod manhatten;
+mod orbit;
 mod program;
 mod rocket_equation;
 mod secure_container;
@@ -9,6 +10,7 @@ mod signal_delay;
 use crate::{
     diagnostic_program::process_instructions,
     manhatten::load_path_directions_input,
+    orbit::{load_orbit_input, process_orbit_map},
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
     rocket_equation::{load_mass_input, total_fuel},
 };
@@ -88,4 +90,17 @@ fn main() {
         "The output for the thermal radiator diagnostic program is {:?}",
         &radiator_diagnostic_output
     );
+
+    let orbit_map = match load_orbit_input("orbit_map.txt") {
+        Ok(p) => p,
+        Err(err) => panic!("Unable to load the orbit data: {}", err),
+    };
+
+    let mut orbit_map_ref = Vec::new();
+    for s in &orbit_map {
+        orbit_map_ref.push(s.as_str())
+    }
+    let com = process_orbit_map(&orbit_map_ref);
+    let total_orbits = com.total_orbits();
+    println!("The total number of orbits is {}", total_orbits)
 }
