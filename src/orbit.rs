@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt,
     fs::File,
     io,
@@ -81,6 +81,21 @@ impl Planet {
         count
     }
 
+    fn collect_planets_to(&self, name: &str) -> Vec<String> {
+        let mut names = Vec::new();
+        for planet in self.orbiting_planets.values() {
+            if planet.name() == name {
+                names.push(self.name().into())
+            }
+            let mut sub_names = planet.collect_planets_to(name);
+            if !(sub_names.is_empty()) {
+                names.push(self.name().into());
+                names.append(&mut sub_names)
+            }
+        }
+        names
+    }
+
     pub fn total_orbits(&self) -> u32 {
         self.all_planet_names()
             .iter()
@@ -96,6 +111,24 @@ impl Planet {
         }
         names
     }
+
+    pub fn distance_crossing_common_point(&self, from: &str, to: &str) -> u32 {
+        let common_from: HashSet<String> = self.collect_planets_to(from).iter().cloned().collect();
+        let common_to: HashSet<String> = self.collect_planets_to(to).iter().cloned().collect();
+
+        let common_planets: Vec<String> = common_from.intersection(&common_to).cloned().collect();
+        let distance_from = self.count_orbits_to(from);
+        let distance_to = self.count_orbits_to(to);
+        let mut min_cross_distance = u32::max_value();
+        for name in common_planets {
+            let common_distance = self.count_orbits_to(&name);
+            let cross_distance = (distance_from - common_distance - 1) + (distance_to - common_distance - 1);
+            if cross_distance < min_cross_distance {
+                min_cross_distance = cross_distance
+            }
+        }
+        min_cross_distance
+    }
 }
 
 pub fn process_orbit_map(map: &[&str]) -> Planet {
@@ -103,7 +136,7 @@ pub fn process_orbit_map(map: &[&str]) -> Planet {
     let mut com = Planet::new(COM);
     let mut planet_pairs: Vec<(String, String)> = map.iter().map(|e| split_orbital_relationship(e)).collect();
     while !(planet_pairs.is_empty()) {
-        planet_pairs.retain(|p| !(com.add_planet_to_orbit_of(&p.1, &p.0)));
+        planet_pairs.retain(|p| !(Planet::add_planet_to_orbit_of(&mut com, &p.1, &p.0)));
     }
     com
 }
@@ -124,6 +157,8 @@ fn split_orbital_relationship(text: &str) -> (String, String) {
         (*planet_names.get(1).unwrap()).to_string(),
     )
 }
+
+
 
 pub fn load_orbit_input(file_name: &str) -> io::Result<Vec<String>> {
     let orbit_input = File::open(file_name)?;
@@ -198,4 +233,15 @@ mod tests {
         let com = process_orbit_map(&map);
         assert_eq!(com.total_orbits(), 42)
     }
+
+    #[test]
+    fn test_distance_crossing_common_point() {
+        let map = [
+            "COM)B", "G)H", "B)C", "C)D", "D)E", "E)F", "B)G", "D)I", "E)J", "J)K", "K)L", "K)YOU", "I)SAN"
+        ];
+        let com = process_orbit_map(&map);
+        assert_eq!(com.distance_crossing_common_point("YOU", "SAN"), 4);
+        assert_eq!(com.distance_crossing_common_point("H", "SAN"), 4)
+    }
+
 }

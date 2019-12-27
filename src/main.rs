@@ -63,13 +63,14 @@ fn main() {
         "The steps distance of the closest intersection is {}",
         signal_delay::find_closest_intersection(&first_wire, &second_wire)
     );
-
-    let count = (367_479..=893_698)
+    let start = 367_479;
+    let end = 893_698;
+    let count = (start..=end)
         .filter(|nmb| secure_container::password_check(*nmb))
         .count();
     println!("The number of different passwords for part 1 is {}", count);
 
-    let count = (367_479..=893_698)
+    let count = (start..=end)
         .filter(|nmb| extra_secure_container::password_check(*nmb))
         .count();
     println!("The number of different passwords for part 2 is {}", count);
@@ -102,5 +103,8 @@ fn main() {
     }
     let com = process_orbit_map(&orbit_map_ref);
     let total_orbits = com.total_orbits();
-    println!("The total number of orbits is {}", total_orbits)
+    println!("The total number of orbits is {}", total_orbits);
+
+    let min_orbitals = com.distance_crossing_common_point("YOU", "SAN");
+    println!("The mininum number of orbital transfers is {}", min_orbitals)
 }
