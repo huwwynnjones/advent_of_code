@@ -1,8 +1,8 @@
-const INSTRUCTION_LENGTH: usize = 4;
-const INPUT_OUTPUT_INS_LENGTH: usize = 2;
+pub(crate) const INSTRUCTION_LENGTH: usize = 4;
+pub(crate) const INPUT_OUTPUT_INS_LENGTH: usize = 2;
 
 #[derive(Debug, PartialEq)]
-enum OpCode {
+pub(crate) enum OpCode {
     Add,
     Multiply,
     Input,
@@ -49,7 +49,7 @@ impl From<i32> for OpCode {
 }
 
 #[derive(Debug, PartialEq)]
-enum ParameterMode {
+pub(crate) enum ParameterMode {
     Position,
     Immediate,
 }
@@ -157,7 +157,7 @@ pub(crate) fn process_instructions(input: Option<i32>, instructions: &[i32]) -> 
     output
 }
 
-fn jump(
+pub(crate) fn jump(
     first_param: Option<i32>,
     second_param: Option<i32>,
     instruction_pointer: &mut usize,
@@ -186,7 +186,7 @@ fn jump(
     }
 }
 
-fn comparison(
+pub(crate) fn comparison(
     first_param: Option<i32>,
     second_param: Option<i32>,
     answer: Option<i32>,
@@ -224,7 +224,7 @@ fn comparison(
     }
 }
 
-fn process_opcode_and_param_mode(code: i32) -> OpcodeMode {
+pub(crate) fn process_opcode_and_param_mode(code: i32) -> OpcodeMode {
     let mut code_chars = Vec::new();
     for ch in code.to_string().chars() {
         code_chars.push(ch);
@@ -258,12 +258,22 @@ fn process_opcode_and_param_mode(code: i32) -> OpcodeMode {
 }
 
 #[derive(Debug)]
-struct OpcodeMode {
+pub(crate) struct OpcodeMode {
     opcode: OpCode,
     parameter_modes: Vec<ParameterMode>,
 }
 
-fn update_instructions(
+impl OpcodeMode {
+    pub(crate) fn opcode(&self) -> &OpCode {
+        &self.opcode
+    }
+
+    pub(crate) fn parameter_modes(&self) -> &Vec<ParameterMode> {
+        &self.parameter_modes
+    }
+}
+
+pub(crate) fn update_instructions(
     instruction_pointer: &mut usize,
     instructions: &mut [i32],
     positions: &Positions,
@@ -295,13 +305,27 @@ fn update_instructions(
     *instruction_pointer += INSTRUCTION_LENGTH;
 }
 
-struct Positions {
+pub(crate) struct Positions {
     first_param: Option<i32>,
     second_param: Option<i32>,
     answer: Option<i32>,
 }
 
-fn determine_positions(instruction_pointer: usize, instructions: &[i32]) -> Positions {
+impl Positions {
+    pub(crate) fn first_param(&self) -> Option<i32> {
+        self.first_param
+    }
+
+    pub(crate) fn second_param(&self) -> Option<i32> {
+        self.second_param
+    }
+
+    pub(crate) fn answer(&self) -> Option<i32> {
+        self.answer
+    }
+}
+
+pub(crate) fn determine_positions(instruction_pointer: usize, instructions: &[i32]) -> Positions {
     let ins_length = instructions.len();
     let first_param = match instruction_pointer + 1 {
         x if x < ins_length => Some(instructions[x]),

@@ -1,3 +1,4 @@
+mod amplifier;
 mod diagnostic_program;
 mod extra_secure_container;
 mod manhatten;
@@ -8,6 +9,7 @@ mod secure_container;
 mod signal_delay;
 
 use crate::{
+    amplifier::find_best_phase_setting_sequence,
     diagnostic_program::process_instructions,
     manhatten::load_path_directions_input,
     orbit::{load_orbit_input, process_orbit_map},
@@ -106,5 +108,16 @@ fn main() {
     println!("The total number of orbits is {}", total_orbits);
 
     let min_orbitals = com.distance_crossing_common_point("YOU", "SAN");
-    println!("The mininum number of orbital transfers is {}", min_orbitals)
+    println!(
+        "The mininum number of orbital transfers is {}",
+        min_orbitals
+    );
+
+    let amplifier_program = match load_program_input("amplifier_program.txt") {
+        Ok(p) => p,
+        Err(err) => panic!("Unable to load the amplifier program data: {}", err),
+    };
+
+    let max_thruster = find_best_phase_setting_sequence(&amplifier_program);
+    println!("The maximum thruster signal is {}", max_thruster)
 }
