@@ -100,7 +100,7 @@ pub(crate) fn find_best_phase_setting_sequence(instructions: &[i32]) -> i32 {
     let mut highest_output = 0;
     let start = 0;
     let end = 5;
-
+    //this is a bit heavy handed i think
     for a in start..end {
         for b in start..end {
             for c in start..end {

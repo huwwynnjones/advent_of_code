@@ -1,6 +1,7 @@
 mod amplifier;
 mod diagnostic_program;
 mod extra_secure_container;
+mod feedback_amplifier;
 mod manhatten;
 mod orbit;
 mod program;
@@ -11,6 +12,7 @@ mod signal_delay;
 use crate::{
     amplifier::find_best_phase_setting_sequence,
     diagnostic_program::process_instructions,
+    feedback_amplifier::find_best_feedback_phase_setting_sequence,
     manhatten::load_path_directions_input,
     orbit::{load_orbit_input, process_orbit_map},
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
@@ -119,5 +121,11 @@ fn main() {
     };
 
     let max_thruster = find_best_phase_setting_sequence(&amplifier_program);
-    println!("The maximum thruster signal is {}", max_thruster)
+    println!("The maximum thruster signal is {}", max_thruster);
+
+    let max_feedback_thruster = find_best_feedback_phase_setting_sequence(&amplifier_program);
+    println!(
+        "The maximum feedback thruster signal is {}",
+        max_feedback_thruster
+    )
 }
