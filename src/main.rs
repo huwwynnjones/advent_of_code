@@ -8,6 +8,7 @@ mod program;
 mod rocket_equation;
 mod secure_container;
 mod signal_delay;
+mod space_image;
 
 use crate::{
     amplifier::find_best_phase_setting_sequence,
@@ -17,6 +18,7 @@ use crate::{
     orbit::{load_orbit_input, process_orbit_map},
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
     rocket_equation::{load_mass_input, total_fuel},
+    space_image::{create_layers_from_image_data, find_layer_with_lowest_nmb, load_image_data},
 };
 
 fn main() {
@@ -127,5 +129,14 @@ fn main() {
     println!(
         "The maximum feedback thruster signal is {}",
         max_feedback_thruster
-    )
+    );
+
+    let space_image_data = match load_image_data("image_data.txt") {
+        Ok(d) => d,
+        Err(err) => panic!("Unable to load the space image data: {}", err),
+    };
+    let layers = create_layers_from_image_data(&space_image_data, 25, 6);
+    let layer = find_layer_with_lowest_nmb(&layers, 0).expect("There should be a layer found");
+    let answer = layer.count_occurences_of(1) * layer.count_occurences_of(2);
+    println!("The image corruption test answer is {}", answer);
 }

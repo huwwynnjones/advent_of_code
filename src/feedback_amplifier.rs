@@ -136,7 +136,6 @@ impl Amplifier {
 }
 
 fn process_feedback_phase_setting_sequence(sequence: &[i32], instructions: &[i32]) -> i32 {
-
     let mut amp_a = Amplifier::new(&instructions);
     let mut amp_b = Amplifier::new(&instructions);
     let mut amp_c = Amplifier::new(&instructions);
