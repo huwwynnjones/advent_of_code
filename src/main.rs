@@ -18,7 +18,10 @@ use crate::{
     orbit::{load_orbit_input, process_orbit_map},
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
     rocket_equation::{load_mass_input, total_fuel},
-    space_image::{create_layers_from_image_data, find_layer_with_lowest_nmb, load_image_data},
+    space_image::{
+        create_final_image, create_layers_from_image_data, find_layer_with_lowest_nmb,
+        load_image_data,
+    },
 };
 
 fn main() {
@@ -139,4 +142,7 @@ fn main() {
     let layer = find_layer_with_lowest_nmb(&layers, 0).expect("There should be a layer found");
     let answer = layer.count_occurences_of(1) * layer.count_occurences_of(2);
     println!("The image corruption test answer is {}", answer);
+
+    let final_image = create_final_image(&layers);
+    println!("The final image is \n{}", final_image.data_as_message())
 }
