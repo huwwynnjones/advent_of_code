@@ -2,6 +2,7 @@ mod amplifier;
 mod diagnostic_program;
 mod extra_secure_container;
 mod feedback_amplifier;
+mod intcode;
 mod manhatten;
 mod orbit;
 mod program;
@@ -14,6 +15,7 @@ use crate::{
     amplifier::find_best_phase_setting_sequence,
     diagnostic_program::process_instructions,
     feedback_amplifier::find_best_feedback_phase_setting_sequence,
+    intcode::IntcodeComputer,
     manhatten::load_path_directions_input,
     orbit::{load_orbit_input, process_orbit_map},
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
@@ -144,5 +146,17 @@ fn main() {
     println!("The image corruption test answer is {}", answer);
 
     let final_image = create_final_image(&layers);
-    println!("The final image is \n{}", final_image.data_as_message())
+    println!("The final image is \n{}", final_image.data_as_message());
+
+    let boost_program = match intcode::load_program_input("boost_program.txt") {
+        Ok(p) => p,
+        Err(err) => panic!("Unable to load the boost program data: {}", err),
+    };
+
+    let mut comp = IntcodeComputer::new(&boost_program);
+    comp.run(&mut vec![1]);
+    println!("The test run output is {:?}", comp.output());
+    comp.load_new_instructions(&boost_program);
+    comp.run(&mut vec![2]);
+    println!("The boost run output is {:?}", comp.output())
 }

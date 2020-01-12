@@ -188,14 +188,14 @@ mod tests {
     fn test_create_final_image() {
         let mut data = vec![0, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 2, 0, 0, 0, 0];
         let mut layers = create_layers_from_image_data(&data, 2, 2);
-        let mut correct_text = "01\n10\n";
+        let mut correct_text = " *\n* \n";
         let mut final_image = create_final_image(&layers);
-        assert_eq!(final_image.data_as_string(), correct_text);
+        assert_eq!(final_image.data_as_message(), correct_text);
 
         data = vec![0, 2, 2, 1, 1, 1, 2, 2, 2, 2, 1, 2, 0, 0, 0, 0];
         layers = create_layers_from_image_data(&data, 2, 2);
-        correct_text = "01\n11\n";
+        correct_text = " *\n**\n";
         final_image = create_final_image(&layers);
-        assert_eq!(final_image.data_as_string(), correct_text)
+        assert_eq!(final_image.data_as_message(), correct_text)
     }
 }
