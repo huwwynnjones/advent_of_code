@@ -180,20 +180,18 @@ impl IntcodeComputer {
                                 ParameterMode::Position | ParameterMode::Immediate => {
                                     memory_update(&mut self.memory, first_param, 0, i);
                                 }
-                                ParameterMode::Relative => {
-                                    memory_update(
-                                        &mut self.memory,
-                                        first_param,
-                                        self.relative_base_offset,
-                                        i,
-                                    )
-                                }
+                                ParameterMode::Relative => memory_update(
+                                    &mut self.memory,
+                                    first_param,
+                                    self.relative_base_offset,
+                                    i,
+                                ),
                             }
                             self.instruction_pointer += INPUT_OUTPUT_INS_LENGTH;
                         }
                         None => {
                             self.state = ComputerState::Waiting;
-                            break
+                            break;
                         }
                     }
                 }

@@ -4,6 +4,7 @@ mod extra_secure_container;
 mod feedback_amplifier;
 mod intcode;
 mod manhatten;
+mod monitoring_station;
 mod orbit;
 mod program;
 mod rocket_equation;
@@ -17,6 +18,7 @@ use crate::{
     feedback_amplifier::find_best_feedback_phase_setting_sequence,
     intcode::IntcodeComputer,
     manhatten::load_path_directions_input,
+    monitoring_station::{load_asteroid_input, AsteroidMap},
     orbit::{load_orbit_input, process_orbit_map},
     program::{find_noun_and_verb, load_program_input, restore_gravity_assist},
     rocket_equation::{load_mass_input, total_fuel},
@@ -158,5 +160,19 @@ fn main() {
     println!("The test run output is {:?}", comp.output());
     comp.load_new_instructions(&boost_program);
     comp.run(&mut vec![2]);
-    println!("The boost run output is {:?}", comp.output())
+    println!("The boost run output is {:?}", comp.output());
+
+    let asteroid_input = match load_asteroid_input("asteroid.txt") {
+        Ok(m) => m,
+        Err(err) => panic!("Unable to load the asteroid data: {}", err),
+    };
+
+    let astroid_map = AsteroidMap::new(&asteroid_input);
+    let best_location = astroid_map.find_best_location();
+    println!(
+        "The best location for the monitoring station is ({}, {}), it can see {} asteroids",
+        (best_location.0).0,
+        (best_location.0).1,
+        best_location.1
+    );
 }
