@@ -1,5 +1,5 @@
 use std::{
-    fmt,
+    f32, fmt,
     fs::File,
     io,
     io::{BufReader, Read},
@@ -64,6 +64,56 @@ impl AsteroidMap {
         }
         (best_point, best_count as u32)
     }
+
+    pub fn shoot_asteroids(&self, base_location: (u32, u32)) -> Vec<(u32, u32)> {
+        let mut target_asteroids: Vec<(u32, u32)> = self
+            .asteroids
+            .iter()
+            .copied()
+            .filter(|x| x != &base_location)
+            .collect();
+        let mut shot_asteroids: Vec<(u32, u32)> = Vec::new();
+
+        while !(&target_asteroids.is_empty()) {
+            let mut asteroid_angles = Vec::new();
+            for asteroid in &target_asteroids {
+                let mut angle = calculate_angle(base_location, *asteroid);
+                let quadrant = quadrant(base_location, *asteroid);
+                let distance = distance(base_location, *asteroid);
+                match quadrant {
+                    Quadrant::NE => angle += 90.0,
+                    Quadrant::SE => angle = angle.abs() + 90.0,
+                    Quadrant::SW => angle = (90.0 - angle.abs()) + 180.0,
+                    Quadrant::NW => angle = angle.abs() + 270.0,
+                }
+
+                asteroid_angles.push((angle, *asteroid, distance));
+                asteroid_angles.sort_by(|a, b| {
+                    a.0.partial_cmp(&b.0)
+                        .unwrap_or_else(|| panic!("cannot sort {} & {}", a.0, b.0))
+                });
+            }
+            let mut iter = asteroid_angles.iter_mut().peekable();
+            let mut multiple_asteroids = Vec::new();
+            while let Some(current) = iter.next() {
+                multiple_asteroids.push(*current);
+                if let Some(next) = iter.peek() {
+                    if approx_equal(current.0, next.0) {
+                        continue;
+                    }
+                }
+                multiple_asteroids.sort_by(|a, b| {
+                    a.2.partial_cmp(&b.2)
+                        .unwrap_or_else(|| panic!("cannot sort {} & {}", a.2, b.2))
+                });
+                let closest_asteroid = multiple_asteroids[0].1;
+                shot_asteroids.push(closest_asteroid);
+                target_asteroids.retain(|x| x != &closest_asteroid);
+                multiple_asteroids.clear();
+            }
+        }
+        shot_asteroids
+    }
 }
 
 #[derive(Debug)]
@@ -91,8 +141,14 @@ impl fmt::Display for Line {
     }
 }
 
+fn distance(start: (u32, u32), end: (u32, u32)) -> f32 {
+    let a = (end.0 as f32 - start.0 as f32).powi(2);
+    let b = (end.1 as f32 - start.1 as f32).powi(2);
+    (a + b).sqrt()
+}
+
 fn calculate_slope(start: (f32, f32), end: (f32, f32)) -> f32 {
-    (end.1 - start.1) / (end.0 - start.0)
+    ((end.1 - start.1) / (end.0 - start.0))
 }
 
 fn calculate_y_intercept(point: (f32, f32), slope: f32) -> f32 {
@@ -100,6 +156,34 @@ fn calculate_y_intercept(point: (f32, f32), slope: f32) -> f32 {
     //6 = 0.5*8 + b
     //6 - 4 = b
     point.1 - (slope * point.0)
+}
+
+fn calculate_angle(start: (u32, u32), end: (u32, u32)) -> f32 {
+    let s = (start.0 as f32, start.1 as f32);
+    let e = (end.0 as f32, end.1 as f32);
+    calculate_slope(s, e).atan().to_degrees()
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+enum Quadrant {
+    NE,
+    SE,
+    SW,
+    NW,
+}
+
+fn quadrant(start: (u32, u32), end: (u32, u32)) -> Quadrant {
+    if (end.0 >= start.0) && (end.1 <= start.1) {
+        Quadrant::NE
+    } else if (end.0 >= start.0) && (end.1 >= start.1) {
+        Quadrant::SE
+    } else if (end.0 <= start.0) && (end.1 >= start.1) {
+        Quadrant::SW
+    } else if (end.0 <= start.0) && (end.1 <= start.1) {
+        Quadrant::NW
+    } else {
+        panic!("Unkown quadrant logic reached for {:?} {:?}", start, end)
+    }
 }
 
 const ERROR: f32 = 0.01;
@@ -119,9 +203,6 @@ fn point_on_line(line: &Line, point: (u32, u32)) -> bool {
             let slope = calculate_slope(line.start, line.end);
             let b = calculate_y_intercept(line.start, slope);
             let y = (slope * p.0) + b;
-            //p.1 == ((y * 1000.0).round() / 1000.0)
-            //here be rounding dragons.....so a dodgy workaround
-            //(p.1 - y).abs() < ERROR
             approx_equal(p.1, y)
         }
     } else {
@@ -162,6 +243,23 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_calculate_angle() {
+        assert_eq!(calculate_angle((8, 3), (8, 1)), -90.0);
+        assert_eq!(calculate_angle((8, 3), (9, 2)), -45.0);
+        assert_eq!(calculate_angle((8, 3), (7, 2)), 45.0);
+        assert_eq!(calculate_angle((8, 3), (7, 4)), -45.0);
+        assert_eq!(calculate_angle((8, 3), (2, 3)), 0.0);
+        assert_eq!(calculate_angle((8, 3), (10, 3)), 0.0);
+        assert_eq!(calculate_angle((8, 3), (8, 4)), 90.0);
+        assert_eq!(calculate_angle((8, 3), (8, 2)), -90.0);
+    }
+
+    #[test]
+    fn test_distance() {
+        assert_eq!(distance((4, 3), (3, 2)), 1.4142135)
+    }
+
+    #[test]
     fn test_line_is_flat() {
         let line = Line::new((0, 3), (0, 8));
         assert!(line_is_flat(&line))
@@ -184,12 +282,6 @@ mod tests {
         assert_eq!(within_end_points(&line, (4, 2)), true);
         let line = Line::new((5, 8), (8, 6));
         assert_eq!(within_end_points(&line, (8, 6)), true);
-    }
-
-    #[test]
-    fn test_calculate_slope() {
-        assert_eq!(calculate_slope((1.0, 3.0), (0.0, 1.0)), 2.0);
-        assert_eq!(calculate_slope((8.0, 6.0), (2.0, 3.0)), 0.5)
     }
 
     #[test]
@@ -253,5 +345,19 @@ mod tests {
         let map = ".#..##.###...#######\n##.############..##.\n.#.######.########.#\n.###.#######.####.#.\n#####.##.#.##.###.##\n..#####..#.#########\n####################\n#.####....###.#.#.##\n##.#################\n#####.##.###..####..\n..######..##.#######\n####.##.####...##..#\n.#####..#.######.###\n##...#.##########...\n#.##########.#######\n.####.#.###.###.#.##\n....##.##.###..#####\n.#.#.###########.###\n#.#.#.#####.####.###\n###.##.####.##.#..##";
         let asteroid_map = AsteroidMap::new(map);
         assert_eq!(asteroid_map.find_best_location(), ((11, 13), 210))
+    }
+
+    #[test]
+    fn test_shoot_asteroids() {
+        let map = ".#....#####...#..\n##...##.#####..##\n##...#...#.#####.\n..#.....X...###..\n..#.#.....#....##";
+        let asteroid_map = AsteroidMap::new(map);
+        let asteroids = asteroid_map.shoot_asteroids((8, 3));
+        assert_eq!(asteroids[17], (4, 4));
+
+        let map = ".#..##.###...#######\n##.############..##.\n.#.######.########.#\n.###.#######.####.#.\n#####.##.#.##.###.##\n..#####..#.#########\n####################\n#.####....###.#.#.##\n##.#################\n#####.##.###..####..\n..######..##.#######\n####.##.####...##..#\n.#####..#.######.###\n##...#.##########...\n#.##########.#######\n.####.#.###.###.#.##\n....##.##.###..#####\n.#.#.###########.###\n#.#.#.#####.####.###\n###.##.####.##.#..##";
+        let asteroid_map = AsteroidMap::new(map);
+        let base = asteroid_map.find_best_location();
+        let asteroids = asteroid_map.shoot_asteroids(base.0);
+        assert_eq!(asteroids[199], (8, 2))
     }
 }

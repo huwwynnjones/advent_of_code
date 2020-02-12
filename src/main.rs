@@ -175,4 +175,11 @@ fn main() {
         (best_location.0).1,
         best_location.1
     );
+
+    let asteroids = astroid_map.shoot_asteroids(best_location.0);
+    let asteroid_200 = asteroids[199];
+    println!(
+        "The 200th asteroid calculation is {}",
+        (asteroid_200.0 * 100) + asteroid_200.1
+    )
 }
